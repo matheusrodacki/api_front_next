@@ -3,20 +3,36 @@ import { useState } from 'react';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
+    const value = e.target.value;
+    setEmail(value);
+
+    // Validação em tempo real do email
+    if (!emailRegex.test(value)) {
+      setEmailError('Insira um email válido.');
+    } else {
+      setEmailError('');
+    }
+
     if (errorMessage) setErrorMessage('');
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
+    if (passwordError) setPasswordError('');
     if (errorMessage) setErrorMessage('');
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault(); // Previne o comportamento padrão do formulário
+
+    if (!validateForm()) {
+      return; // Se a validação falhar, não prossegue com a submissão
+    }
 
     try {
       const response = await fetch('http://localhost:8000/auth/login', {
@@ -45,6 +61,31 @@ export default function LoginPage() {
       console.error('Erro na requisição:', error);
       alert('Ocorreu um erro ao conectar com o servidor.');
     }
+  };
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const validateForm = () => {
+    let valid = true;
+
+    if (!email) {
+      setEmailError('O email é obrigatório.');
+      valid = false;
+    } else if (!emailRegex.test(email)) {
+      setEmailError('Insira um email válido.');
+      valid = false;
+    } else {
+      setEmailError('');
+    }
+
+    if (!password) {
+      setPasswordError('A senha é obrigatória.');
+      valid = false;
+    } else {
+      setPasswordError('');
+    }
+
+    return valid;
   };
 
   return (
@@ -145,8 +186,18 @@ export default function LoginPage() {
                   name='email'
                   value={email}
                   onChange={handleEmailChange}
-                  className='mt-1 w-full rounded-md border-gray-200 bg-white text-sm text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200'
+                  aria-invalid={emailError ? 'true' : 'false'}
+                  aria-describedby={emailError ? 'email-error' : undefined}
+                  className={`mt-1 w-full rounded-md border ${
+                    emailError ? 'border-red-500' : 'border-gray-200'
+                  } bg-white text-sm text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200`}
                 />
+
+                {emailError && (
+                  <p className='mt-1 text-sm text-red-600 dark:text-red-500'>
+                    {emailError}
+                  </p>
+                )}
               </div>
 
               <div className='col-span-4'>
@@ -162,8 +213,16 @@ export default function LoginPage() {
                   name='password'
                   value={password}
                   onChange={handlePasswordChange}
-                  className='mt-1 w-full rounded-md border-gray-200 bg-white text-sm text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200'
+                  className={`mt-1 w-full rounded-md border ${
+                    passwordError ? 'border-red-500' : 'border-gray-200'
+                  } bg-white text-sm text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200`}
                 />
+
+                {passwordError && (
+                  <p className='mt-1 text-sm text-red-600 dark:text-red-500'>
+                    {passwordError}
+                  </p>
+                )}
               </div>
 
               <div className='col-span-6 sm:flex sm:items-center sm:gap-4'>
@@ -174,7 +233,7 @@ export default function LoginPage() {
                 <p className='mt-4 text-sm text-gray-500 sm:mt-0 dark:text-gray-400'>
                   Don&apos;t have an account?{' '}
                   <a
-                    href='#'
+                    href='/signup'
                     className='text-gray-700 underline dark:text-gray-200'>
                     Sign up
                   </a>
